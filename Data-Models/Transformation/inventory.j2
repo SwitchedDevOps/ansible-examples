@@ -1,0 +1,8 @@
+# Ansible inventory generated from network data model
+#
+---
+all:
+  hosts:
+{% for hostname in nodes.keys() %}
+    {{ hostname }}:
+{% endfor %}

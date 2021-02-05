@@ -1,0 +1,19 @@
+#!/usr/bin/env ansible-playbook
+#
+---
+- name: Transform network data model into device data model(s)
+  hosts: localhost
+  tasks:
+  - name: Read network data model
+    include_vars: network.yml
+  - name: Create per-device data model(s)
+    template:
+      src: device-data.j2
+      dest: host_vars/{{ hostname }}.yml
+    loop: "{{ nodes.keys() }}"
+    loop_control:
+      loop_var: hostname
+  - name: Create Ansible inventory
+    template:
+      src: inventory.j2
+      dest: hosts.yml

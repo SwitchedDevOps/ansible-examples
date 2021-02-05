@@ -1,0 +1,40 @@
+{#
+  Jinja2 macros to create interface- and BGP neighbor data structure.
+  Be very careful about proper indentation - it's YAML after all.
+#}
+{% macro interface(name,addr) -%}
+- name: {{ name }}
+  ip: {{ addr }}
+{%- endmacro %}
+{% macro neighbor(name,ip) -%}
+- bgp_as: {{ nodes[name].bgp_as }}
+  ip: {{ ip|ipaddr('address') }}
+{%- endmacro %}
+#
+# host_vars data for {{ hostname }} generated from network device data model
+#
+---
+hostname: {{ hostname }}
+bgp_as: {{ nodes[hostname].bgp_as }}
+interfaces:
+{% for link in links %}
+{%   for node,iflist in link|dictsort if node != 'prefix' %}
+{%     if node == hostname %}
+{%       if link.prefix is defined %}
+{{         interface(iflist,link.prefix|ipaddr(loop.index)) }}
+{%       else %}
+{%         for ifname,ip in iflist|dictsort %}
+{{           interface(ifname,ip) }}
+{%         endfor %}
+{%       endif %}
+{%     endif %}
+{%   endfor %}
+{% endfor %}
+neighbors:
+{% for link in links if link|length > 1 and hostname in link.keys() %}
+{%   for node,ifname in link|dictsort if node != 'prefix' %}
+{%     if node != hostname %}
+{{       neighbor(node,link.prefix|ipaddr(loop.index)) }}
+{%     endif %}
+{%   endfor %}
+{% endfor %}
